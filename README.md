@@ -1,9 +1,6 @@
-Useful links:
+# Background
 
-* [Definition of GraphQL language](http://facebook.github.io/graphql/October2016/#sec-Overview)
-* [Tutorial about GraphQL queries](http://graphql.org/learn/queries/)
-* [graphQL at GDC](https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql)
-* [GDC Data Model](https://gdc.cancer.gov/developers/gdc-data-model/gdc-data-model-components)
+Simple command line tool to perform graphGL queries for NCI Genomics Data Commons.  Given a "bare GraphQL" query ([as described here](https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql)), this script constructs and passes a JSON query, and writes out the response.
 
 # Sample Usage
 
@@ -21,9 +18,15 @@ Useful links:
 }
 ```
 
-3. perform query with,
+3. Perform query with,
 
 ```
    queryGDC TOKEN QUERY
 ```
  
+# Useful links:
+
+* [Definition of GraphQL language](http://facebook.github.io/graphql/October2016/#sec-Overview)
+* [Tutorial about GraphQL queries](http://graphql.org/learn/queries/)
+* [graphQL at GDC](https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql)
+* [GDC Data Model](https://gdc.cancer.gov/developers/gdc-data-model/gdc-data-model-components)
