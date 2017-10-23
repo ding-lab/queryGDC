@@ -2,6 +2,9 @@
 
 # Execute given GraphQL file as a query to GDC
 # Usage: bash queryGDC.sh token.txt query.dat
+# Matthew A. Wyczalkowski
+# m.wyczalkowski@wustl.edu
+# Ding Lab, Washington University School of Medicine
 
 function run_query {
     QUERY=$1
