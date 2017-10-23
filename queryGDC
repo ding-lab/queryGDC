@@ -1,7 +1,13 @@
 #!/bin/bash -l
 
 # Execute given GraphQL file as a query to GDC
-# Usage: bash queryGDC.sh token.txt query.dat
+# Usage: queryGDC token.txt query.dat
+# 
+# token.txt contains GDC authentication token (see https://docs.gdc.cancer.gov/Data_Submission_Portal/Users_Guide/Authentication/ )
+# query.dat contains "bare queryGL" script (see https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql )
+#       queryGDC token.txt - 
+#   will read query from STDIN
+
 # Matthew A. Wyczalkowski
 # m.wyczalkowski@wustl.edu
 # Ding Lab, Washington University School of Medicine
@@ -19,7 +25,11 @@ GQL=$1
 
 PY="import json, sys; query = sys.stdin.read().rstrip(); d = { 'query': query, 'variables': 'null' }; print(json.dumps(d))"
 
+if [ $GQL == '-' ]; then
+cat - | python -c "$PY"
+else
 python -c "$PY" < $GQL
+fi
 }
 
 
@@ -29,7 +39,7 @@ python -c "$PY" < $GQL
 
 if [ "$#" -ne 2 ]; then
 echo Incorrect number of arguments passed: got $#, expecting 2
-echo Usage: bash queryGDC.sh token.txt query.json
+echo Usage: queryGDC token.txt query.json
 exit
 fi
 
