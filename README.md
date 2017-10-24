@@ -30,3 +30,4 @@ Simple command line tool to perform graphGL queries for NCI Genomics Data Common
 * [Tutorial about GraphQL queries](http://graphql.org/learn/queries/)
 * [graphQL at GDC](https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql)
 * [GDC Data Model](https://gdc.cancer.gov/developers/gdc-data-model/gdc-data-model-components)
+* [GraphiQL](https://portal.gdc.cancer.gov/submission/graphiql) A graphical interface for the GDC GraphQL
