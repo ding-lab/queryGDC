@@ -21,6 +21,15 @@ function get_json {
 # Creates valid GDC query JSON string based on graphQL data
 # For testing, this content of GQL file works:
 # { sample(with_path_to: {type: "case", submitter_id:"C3L-00004"}) { id submitter_id sample_type } }
+
+
+# Escaping, in this context, means converting it to a format that could be
+# parsed as a string.  This involves replacing special characters that could
+# inhibit parsing, such as newline and tab, with escape sequences, which would
+# be "\n" and "\t" respectively.  The following page explains all of the
+# replacement and also has a tool that does this:
+# https://www.freeformatter.com/json-escape.html
+
 GQL=$1
 
 PY="import json, sys; query = sys.stdin.read().rstrip(); d = { 'query': query, 'variables': 'null' }; print(json.dumps(d))"
