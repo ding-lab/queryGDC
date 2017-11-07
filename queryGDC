@@ -1,67 +1,139 @@
 #!/bin/bash -l
 
 # Execute given GraphQL file as a query to GDC
-# Usage: queryGDC token.txt query.dat
+# Usage: queryGDC [options] query.dat
+#
+# -t token.txt: define token on command line.  Mandatory
+# -v: print diagnostic information to stderr
+# -r: repeat query in case of errors until succeeds.  Meant to deal with timeout errors.
+# -d: dry run.  Print query but do not execute
 # 
 # token.txt contains GDC authentication token (see https://docs.gdc.cancer.gov/Data_Submission_Portal/Users_Guide/Authentication/ )
 # query.dat contains "bare queryGL" script (see https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql )
 #       queryGDC token.txt - 
 #   will read query from STDIN
 
+# TODO: Allow token.txt to be set either with flag -t, in environment variable GDC_TOKEN, or default ./gdc-user-token.txt
+
 # Matthew A. Wyczalkowski
 # m.wyczalkowski@wustl.edu
 # Ding Lab, Washington University School of Medicine
 
+# usage: run_query QUERY_JSON t
+# where t is token string
 function run_query {
-    QUERY=$1
-    curl -s -XPOST -H "X-Auth-Token: $t" https://gdc-api.nci.nih.gov/v0/submission/graphql --data "$QUERY" 
+    QUERY_JSON=$1
+    t=$2
+    
+    if [ $DRYRUN ]; then
+        >&2 echo curl -s -XPOST -H \"X-Auth-Token: $t\" https://gdc-api.nci.nih.gov/v0/submission/graphql --data \"$QUERY_JSON\" 
+        >&2 echo Exiting after dry run.
+        exit
+    else
+        curl -s -XPOST -H "X-Auth-Token: $t" https://gdc-api.nci.nih.gov/v0/submission/graphql --data "$QUERY_JSON" 
+    fi
+}
+
+# Perform query repatedly until it succeeds.
+# Goal is to handle this response:
+# R = { "data": {}, "errors": [ "Query exceeded 20.0 second timeout. Please reduce query complexity and try again. Ways to limit query complexity include adding \"first: 1\" arguments to limit results, limiting path query filter usage (e.g. with_path_to), or limiting extensive path traversal field inclusion (e.g. _related_cases)." ] }
+# This happens with variable frequency
+function run_query_retry {
+    QUERY_JSON=$1
+    t=$2
+
+    R=$(run_query "$QUERY_JSON" "$t")  
+
+    ERR=$(echo $R | jq -r '.errors[]? ')
+
+    if [ -z "$ERR" ]; then
+        if [ $VERBOSE ]; then
+            >&2 echo RESULT: $R
+        fi
+        echo "$R"
+    else
+        if [ $VERBOSE ]; then
+            >&2 echo ERRORS: $ERR
+            >&2 echo Query failed.  Retrying.
+        fi
+        run_query_retry "$QUERY_JSON" "$t"
+    fi
 }
 
 function get_json {
-# Creates valid GDC query JSON string based on graphQL data
-# For testing, this content of GQL file works:
-# { sample(with_path_to: {type: "case", submitter_id:"C3L-00004"}) { id submitter_id sample_type } }
+    # Creates valid GDC query JSON string based on graphQL data
+    # For testing, this content of GQL file works:
+    # { sample(with_path_to: {type: "case", submitter_id:"C3L-00004"}) { id submitter_id sample_type } }
 
+    # Escaping, in this context, means converting it to a format that could be
+    # parsed as a string.  This involves replacing special characters that could
+    # inhibit parsing, such as newline and tab, with escape sequences, which would
+    # be "\n" and "\t" respectively.  The following page explains all of the
+    # replacement and also has a tool that does this:
+    # https://www.freeformatter.com/json-escape.html
 
-# Escaping, in this context, means converting it to a format that could be
-# parsed as a string.  This involves replacing special characters that could
-# inhibit parsing, such as newline and tab, with escape sequences, which would
-# be "\n" and "\t" respectively.  The following page explains all of the
-# replacement and also has a tool that does this:
-# https://www.freeformatter.com/json-escape.html
+    GQL=$1
 
-GQL=$1
+    PY="import json, sys; query = sys.stdin.read().rstrip(); d = { 'query': query, 'variables': 'null' }; print(json.dumps(d))"
 
-PY="import json, sys; query = sys.stdin.read().rstrip(); d = { 'query': query, 'variables': 'null' }; print(json.dumps(d))"
-
-if [ $GQL == '-' ]; then
-cat - | python -c "$PY"
-else
-python -c "$PY" < $GQL
-fi
+    if [ $GQL == '-' ]; then
+        cat - | python -c "$PY"
+    else
+        python -c "$PY" < $GQL
+    fi
 }
 
+# http://wiki.bash-hackers.org/howto/getopts_tutorial
+while getopts ":t:vrd" opt; do
+  case $opt in
+    v)  
+      VERBOSE=1
+      ;;
+    r)  
+      REPEAT=1
+      ;;
+    d)  
+      DRYRUN=1
+      ;;
+    t)
+      TOKEN=$OPTARG
+      ;;
+    \?)
+      >&2 echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      >&2 echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
 
-# Run a query in a given file against GDC server
-# where query is file with bare_graphql query (as described here
-# https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql )
 
-if [ "$#" -ne 2 ]; then
-echo Incorrect number of arguments passed: got $#, expecting 2
-echo Usage: queryGDC token.txt query.json
-exit
-fi
-
-#TOKEN="config/gdc-user-token.2017-10-23T18-08-47.214Z.txt"
-TOKEN=$1
-if [ ! -f $TOKEN ]; then
-    echo Token $TOKEN not found
+if [ "$#" -ne 1 ]; then
+    >&2 echo Error: Wrong number of arguments
+    >&2 echo Usage: queryGDC \[options\] query.dat
     exit
 fi
 
-export t=$(cat $TOKEN)
+if [ -z $TOKEN ]; then
+    >&2 echo Token not defined
+    exit
+fi
 
-JSON=$(get_json $2)
+if [ ! -f $TOKEN ]; then
+    >&2 echo Token $TOKEN not found
+    exit
+fi
+T=$(cat $TOKEN)
 
-run_query "$JSON"
+GQL=$1
+JSON=$(get_json $GQL)  
+
+if [ $REPEAT ]; then
+    run_query_retry "$JSON" "$T"
+else
+    run_query "$JSON" "$T"
+fi
 
