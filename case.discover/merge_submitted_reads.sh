@@ -1,11 +1,12 @@
 # Provide comprehensive summary of submitted reads (aligned and unaligned)
 # Reads SR_from_read_group, writes to stdout the following, one line per 
 # submitted_aligned_reads/submitted_unaligned_reads ("SR"):
-#   case, disease, experimental_strategy, sample_type, samples, filename, filesize, UUID, md5sum
+#   case, disease, experimental_strategy, sample_type, samples, filename, filesize, data_format, UUID, md5sum
 # where 
 #   experimental_strategy is one of WGS, WXS, RNA-Seq
 #   sample_type is one of "Primary Tumor", "Blood Derived Normal"
 #   samples is ;-separated list of all sample names associated with this SR
+#   data_format is either BAM for FASTQ
 
 
 if [ "$#" -ne 2 ]; then
@@ -72,9 +73,10 @@ while read ID; do
     ES=$(grep $ID $SR_FN | cut -f 2 | head -n1)
     FN=$(grep $ID $SR_FN | cut -f 5 | head -n1)
     FS=$(grep $ID $SR_FN | cut -f 6 | head -n1)
+    DF=$(grep $ID $SR_FN | cut -f 4 | head -n1)
     MD=$(grep $ID $SR_FN | cut -f 8 | head -n1)
 
-    printf "$CASE\t$DISEASE\t$ES\t$SAMP_TYPE\t$SAMPS\t$FN\t$FS\t$ID\t$MD\n"
+    printf "$CASE\t$DISEASE\t$ES\t$SAMP_TYPE\t$SAMPS\t$FN\t$FS\t$DF\t$ID\t$MD\n"
 
 done < <(cut -f 7 $SR_FN | sort -u)
 
