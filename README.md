@@ -23,6 +23,18 @@ Simple command line tool to perform graphGL queries for NCI Genomics Data Common
 ```
    queryGDC TOKEN QUERY
 ```
+
+# Case Discover
+
+`case.discover` directory contains several scripts for discovering and summarizing all SR (`submitted_aligned_reads` and `submitted_unaligned_reads`)
+associated with a given case.  These scripts are,
+
+1. `get_sample.sh`: Get information about all samples for a given case
+2. `get_read_groups.sh`: Get information about all read groups for a given case (using sample information)
+3. `get_submitted_reads.sh`: Get information about SR for a given case (using `read_group` information)
+4. `merge_submitted_reads.sh`: Summarize SR information, writing the following for every unique submitted read file, ` case, disease, experimental_strategy, sample_type, samples, filename, filesize, UUID, md5sum `
+
+These scripts were developed for CPTAC3 Genomic project but should be of general use.
  
 # Useful links:
 
