@@ -7,7 +7,6 @@
 #   sample_type is one of "Primary Tumor", "Blood Derived Normal"
 #   samples is ;-separated list of all sample names associated with this SR
 
-"$CASE\t$DISEASE\t$ES\t$SAMP_TYPE\t$SAMPS\t$FN\t$FS\t$ID\t$MD\n"
 
 if [ "$#" -ne 2 ]; then
     echo Error: Wrong number of arguments
