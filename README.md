@@ -34,7 +34,10 @@ associated with a given case.  These scripts are,
 3. `get_submitted_reads.sh`: Get information about SR for a given case (using `read_group` information)
 4. `merge_submitted_reads.sh`: Summarize SR information, writing the following for every unique submitted read file, ` case, disease, experimental_strategy, sample_type, samples, filename, filesize, UUID, md5sum `
 
-These scripts were developed for CPTAC3 Genomic project but should be of general use.
+These scripts were developed for CPTAC3 Genomic project but should be of
+general use.  Note that these scripts are relatively slow, particularly step 3,
+which performs a query for every `read_group` in a given case, much of which is
+duplicate.
  
 # Useful links:
 
