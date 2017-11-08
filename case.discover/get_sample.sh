@@ -3,7 +3,7 @@
 
 if [ "$#" -ne 2 ]; then
     echo Error: Wrong number of arguments
-    echo Usage: 2_get_sample.sh CASE TOKEN
+    echo Usage: get_sample.sh CASE TOKEN
     exit
 fi
 
