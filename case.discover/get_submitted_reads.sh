@@ -1,14 +1,17 @@
 # Get details about submitted_aligned_reads and submitted_aligned_reads from read_group data
 # For a given case, process read_group_from_case file.  Write SR_from_read_group
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 1 ]; then
     echo Error: Wrong number of arguments
-    echo Usage: get_submitted_reads.sh CASE TOKEN
+    echo Usage: get_submitted_reads.sh CASE 
     exit
 fi
 
 CASE=$1
-TOKEN=$2
+if [ -z $GDC_TOKEN ]; then
+    >&2 GDC_TOKEN environment variable not defined.  Quitting.
+    exit 1
+fi
 
 function SAR_from_read_group {
     RG=$1 # E.g C3L-00004-31
@@ -46,6 +49,13 @@ function SUR_from_read_group {
 EOF
 }
 
+if [ -z $QUERYGDC_HOME ]; then
+    QUERYGDC_HOME="./queryGDC"
+    >&2 echo QUERYGDC_HOME not set, using default ./queryGDC
+fi
+QUERYGDC="$QUERYGDC_HOME/queryGDC"
+
+
 DAT="dat/$CASE/read_group_from_case.$CASE.dat"
 OUTD="dat/$CASE"
 mkdir -p $OUTD
@@ -69,7 +79,7 @@ while read L; do
         Q=$(SAR_from_read_group $RG)
         >&2 echo QUERY: $Q
 
-        R=$(echo $Q | queryGDC -r -v -t $TOKEN -)
+        R=$(echo $Q | $QUERYGDC -r -v -)
 
         echo $R | jq -r '.data.submitted_aligned_reads[] | "\(.experimental_strategy)\t\(.data_category)\t\(.data_format)\t\(.file_name)\t\(.file_size)\t\(.id)\t\(.md5sum)"' | sed "s/^/$SAMPLE\t/" >> $OUTTMP
 
@@ -77,7 +87,7 @@ while read L; do
 
         Q=$(SUR_from_read_group $RG)
         >&2 echo QUERY: $Q
-        R=$(echo $Q | queryGDC -r -v -t $TOKEN -)
+        R=$(echo $Q | $QUERYGDC -r -v -)
 
         echo $R | jq -r '.data.submitted_unaligned_reads[] | "\(.experimental_strategy)\t\(.data_category)\t\(.data_format)\t\(.file_name)\t\(.file_size)\t\(.id)\t\(.md5sum)"' | sed "s/^/$SAMPLE\t/" >> $OUTTMP
 

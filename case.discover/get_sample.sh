@@ -38,8 +38,8 @@ EOF
 }
 
 if [ -z $QUERYGDC_HOME ]; then
-QUERYGDC_HOME="./queryGDC"
->&2 echo QUERYGDC_HOME not set, using default ./queryGDC
+    QUERYGDC_HOME="./queryGDC"
+    >&2 echo QUERYGDC_HOME not set, using default ./queryGDC
 fi
 QUERYGDC="$QUERYGDC_HOME/queryGDC"
 
