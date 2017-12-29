@@ -3,17 +3,15 @@
 # Execute given GraphQL file as a query to GDC
 # Usage: queryGDC [options] query.dat
 #
-# -t token.txt: define token on command line.  Mandatory
+# -t token.txt: define token file; may also be defined by `export GDC_TOKEN=file`.  Default ./gdc-user-token.txt
 # -v: print diagnostic information to stderr
-# -r: repeat query in case of errors until succeeds.  Meant to deal with timeout errors.
+# -r: repeat query in case of timeout errors until succeeds.  Stops on other errors.
 # -d: dry run.  Print query but do not execute
 # 
 # token.txt contains GDC authentication token (see https://docs.gdc.cancer.gov/Data_Submission_Portal/Users_Guide/Authentication/ )
 # query.dat contains "bare queryGL" script (see https://docs.gdc.cancer.gov/API/Users_Guide/Submission/#querying-submitted-data-using-graphql )
-#       queryGDC token.txt - 
+#       queryGDC - 
 #   will read query from STDIN
-
-# TODO: Allow token.txt to be set either with flag -t, in environment variable GDC_TOKEN, or default ./gdc-user-token.txt
 
 # Matthew A. Wyczalkowski
 # m.wyczalkowski@wustl.edu
@@ -34,10 +32,11 @@ function run_query {
     fi
 }
 
-# Perform query repatedly until it succeeds.
+# Perform query, repeating in case of timeout error until it succeeds.
 # Goal is to handle this response:
 # R = { "data": {}, "errors": [ "Query exceeded 20.0 second timeout. Please reduce query complexity and try again. Ways to limit query complexity include adding \"first: 1\" arguments to limit results, limiting path query filter usage (e.g. with_path_to), or limiting extensive path traversal field inclusion (e.g. _related_cases)." ] }
 # This happens with variable frequency
+# We will test for for errors, such as "Unauthorized query.", and quit if encountered.
 function run_query_retry {
     QUERY_JSON=$1
     t=$2
@@ -52,6 +51,10 @@ function run_query_retry {
         fi
         echo "$R"
     else
+        if [ "$ERR" == "Unauthorized query." ]; then
+            >&2 echo Fatal error: $ERR
+            exit 1
+        fi
         if [ $VERBOSE ]; then
             >&2 echo ERRORS: $ERR
             >&2 echo Query failed.  Retrying.
@@ -83,7 +86,11 @@ function get_json {
     fi
 }
 
-# http://wiki.bash-hackers.org/howto/getopts_tutorial
+# If GDC_TOKEN not defined by environment variable, set it to default value
+if [ -z $GDC_TOKEN ]; then
+GDC_TOKEN="gdc-user-token.txt"
+fi
+
 while getopts ":t:vrd" opt; do
   case $opt in
     v)  
@@ -96,7 +103,7 @@ while getopts ":t:vrd" opt; do
       DRYRUN=1
       ;;
     t)
-      TOKEN=$OPTARG
+      GDC_TOKEN=$OPTARG
       ;;
     \?)
       >&2 echo "Invalid option: -$OPTARG" >&2
@@ -112,21 +119,20 @@ shift $((OPTIND-1))
 
 
 if [ "$#" -ne 1 ]; then
-    >&2 echo Error: Wrong number of arguments
+    >&2 echo queryGDC error: Wrong number of arguments
     >&2 echo Usage: queryGDC \[options\] query.dat
     exit
 fi
 
-if [ -z $TOKEN ]; then
-    >&2 echo Token not defined
-    exit
+if [ $VERBOSE ]; then
+    >&2 echo Using token file $GDC_TOKEN
 fi
 
-if [ ! -f $TOKEN ]; then
-    >&2 echo Token $TOKEN not found
+if [ ! -f $GDC_TOKEN ]; then
+    >&2 echo Token $GDC_TOKEN not found
     exit
 fi
-T=$(cat $TOKEN)
+T=$(cat $GDC_TOKEN)
 
 GQL=$1
 JSON=$(get_json $GQL)  
