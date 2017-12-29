@@ -22,6 +22,7 @@ function read_group_from_sample_query {
             submitter_id
             library_strategy
             experiment_name
+            target_capture_kit_target_region
         }
     }
 EOF
@@ -54,7 +55,7 @@ while read L; do
 
     R=$(echo $Q | $QUERYGDC -r -v -)
 
-    echo $R | jq -r '.data.read_group[] | "\(.submitter_id)\t\(.library_strategy)\t\(.experiment_name)"' | sed "s/^/$SAMPLE\t/" >> $OUT
+    echo $R | jq -r '.data.read_group[] | "\(.submitter_id)\t\(.library_strategy)\t\(.experiment_name)\t\(.target_capture_kit_target_region)"' | sed "s/^/$SAMPLE\t/" >> $OUT
 
     printf "\n"
 
