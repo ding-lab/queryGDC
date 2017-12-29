@@ -46,29 +46,11 @@ query.json contains "bare queryGL" script (see https://docs.gdc.cancer.gov/API/U
 
 # Case Discover
 
-`case.discover` directory contains several scripts for discovering and summarizing all SR (`submitted_aligned_reads` and `submitted_unaligned_reads`)
-associated with a given case.  These scripts are,
+`case.discover` project contains several scripts for discovering and summarizing all SR (`submitted_aligned_reads` and `submitted_unaligned_reads`)
+associated with a given case.  Developed for CPTAC3 Genomic project.
 
-1. `get_sample.sh`: Get information about all samples for a given case
-2. `get_read_groups.sh`: Get information about all read groups for a given case (using sample information)
-3. `get_submitted_reads.sh`: Get information about SR for a given case (using `read_group` information)
-4. `merge_submitted_reads.sh`: Summarize SR information, writing the following for every unique submitted read file, ` case, disease, experimental_strategy, sample_type, samples, filename, filesize, datatype, UUID, md5sum `
+See [CPTAC3.case.discover](https://github.com/ding-lab/CPTAC3.case.discover) on github.
 
-These scripts were developed for CPTAC3 Genomic project but should be of
-general use.  Note that these scripts are relatively slow, particularly step 3,
-which performs a query for every `read_group` in a given case, much of which is
-duplicate.
-
-## Example Usage
-
-1. `bash get_sample.sh C3L-00004 token.txt`
-    Writes sample information to `dat/C3L-00004/sample_from_case.C3L-00004.dat`
-2. `bash get_read_groups.sh C3L-00004 token.txt`
-    Writes read_group information to `dat/C3L-00004/read_group_from_case.C3L-00004.dat`
-3. `get_submitted_reads.sh C3L-00004 token.txt`
-    Writes details about submitted_aligned_reads and submitted_unaligned_reads to `dat/C3L-00004/SR_from_read_group.C3L-00004.dat`
-4. `merge_submitted_reads.sh C3L-00004 CCRC`
-    Writes a summary table for all unique submitted reads.  Disease field (e.g., `CCRC`) is for convenience only
 
 # Installation
 
