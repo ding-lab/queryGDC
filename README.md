@@ -44,6 +44,16 @@ query.json contains "bare queryGL" script (see https://docs.gdc.cancer.gov/API/U
   will read query from STDIN
 ```
 
+### Transient errors
+
+On occasion, we see the following error:
+```
+result="<html><head><title>Hold up there!</title></head><body><center><h1>Hold up there!</h1><p>You are posting too quickly. Wait for few moments and try again.</p></body></html>"
+```
+
+A test for this response was implemented in queryGDC, and results in waiting 5 seconds before trying again
+
+
 # Case Discover
 
 `case.discover` project contains several scripts for discovering and summarizing all SR (`submitted_aligned_reads` and `submitted_unaligned_reads`)
