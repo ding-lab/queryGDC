@@ -66,13 +66,22 @@ function run_query {
 # R = { "data": {}, "errors": [ "Query exceeded 20.0 second timeout. Please reduce query complexity and try again. Ways to limit query complexity include adding \"first: 1\" arguments to limit results, limiting path query filter usage (e.g. with_path_to), or limiting extensive path traversal field inclusion (e.g. _related_cases)." ] }
 # This happens with variable frequency
 # We will test for for errors, such as "Unauthorized query.", and quit if encountered.
+#
+# Another error results in R="<html><head><title>Hold up there!</title></head><body><center><h1>Hold up there!</h1><p>You are posting too quickly. Wait for few moments and try again.</p></body></html>"
+# This will result in us waiting 5 seconds before trying again
 function run_query_retry {
     QUERY_JSON=$1
     t=$2
 
     R=$(run_query "$QUERY_JSON" "$t")  
-    ERR=$(echo $R | jq -r '.errors[]? ')
-    test_exit_status
+    # This is a transiet error and code below not fully tested.
+    if [[ $R = *"You are posting too quickly."* ]]; then
+        ERR="You are posting too quickly."
+    else
+        # Here assume valid JSON.  TODO: test whether JSON is in fact valid
+        ERR=$(echo $R | jq -r '.errors[]? ')
+        test_exit_status
+    fi
 
     if [ -z "$ERR" ]; then
         if [ $VERBOSE ]; then
@@ -83,6 +92,10 @@ function run_query_retry {
         if [ "$ERR" == "Unauthorized query." ]; then
             >&2 echo Fatal error: $ERR
             exit 1
+        fi
+        if [ "$ERR" == "You are posting too quickly." ]; then
+            >&2 echo Posting too quickly error.  Pausing.
+            wait 5
         fi
         if [ $VERBOSE ]; then
             >&2 echo ERRORS: $ERR
